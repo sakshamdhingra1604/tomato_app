@@ -8,6 +8,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../injection.dart';
 import '../signup/signup_screen.dart';
+import '../vendor/auth/vendor_login_screen.dart';
 import 'widgets/auth_field.dart';
 import 'widgets/social_button.dart';
 
@@ -186,8 +187,32 @@ class _LoginScreenState extends State<LoginScreen> {
                       ],
                     ),
                   ),
+
+                  const SizedBox(height: 20),
+                  FadeInUp(
+                    delay: const Duration(milliseconds: 1000),
+                    child: Column(
+                      children: [
+                        const Text("Are you a Cafe Owner?", style: TextStyle(color: AppColors.textSecondary)),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) =>  VendorLoginScreen()),
+                            );
+                          },
+                          child: const Text(
+                            "Vendor Login Here",
+                            style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
                 ],
               ),
+
             ),
           ),
           if (_isLoading)
