@@ -1,11 +1,12 @@
-// ✅ GALAT import hata kar tumhara original routes import dala hai
 import 'package:flutter/material.dart';
 import 'package:animate_do/animate_do.dart';
-import 'package:loginsignuptesting/core/routes/app_routes.dart'; // Sahi import
+import 'package:loginsignuptesting/core/routes/app_routes.dart';
 import 'package:loginsignuptesting/presentation/Screens/signup/widgets/password_validator.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../data/repositories/auth_repository.dart';
+import '../../../injection.dart';
 import '../login/widgets/auth_field.dart';
+
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -15,36 +16,40 @@ class SignupScreen extends StatefulWidget {
 }
 
 class _SignupScreenState extends State<SignupScreen> {
-  // ... controllers aur validators (No changes)
-  final _nameController = TextEditingController();
-  final _rollController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _authRepo = AuthRepository();
+  final _authRepo = getIt<AuthRepository>();
   bool _isLoading = false;
 
+  // Password Validation Logic
   bool get hasUppercase => _passwordController.text.contains(RegExp(r'[A-Z]'));
   bool get hasDigits => _passwordController.text.contains(RegExp(r'[0-9]'));
   bool get hasSpecialChar => _passwordController.text.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'));
   bool get hasMinLength => _passwordController.text.length >= 8;
 
   void _handleSignup() async {
+    // Basic Validation
+    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
+      _showError("Fields khali mat chhodo bhai!");
+      return;
+    }
+
     if (!hasMinLength || !hasUppercase || !hasDigits || !hasSpecialChar) {
-      _showError("Password criteria poora nahi hai bhai!");
+      _showError("Password criteria poora nahi hai!");
       return;
     }
 
     setState(() => _isLoading = true);
     try {
+      // Step 1: Create Firebase Auth Account
       await _authRepo.signUpWithEmail(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
-        name: _nameController.text.trim(),
-        rollNumber: _rollController.text.trim(),
       );
-      // ✅ Navigator fix
+
+      // Step 2: Redirect to Complete Profile (Details wahan bhari jayengi)
       if (mounted) {
-        Navigator.pushNamedAndRemoveUntil(context, AppRoutes.main, (route) => false);
+        Navigator.pushReplacementNamed(context, '/complete-profile');
       }
     } catch (e) {
       _showError(e.toString());
@@ -55,13 +60,16 @@ class _SignupScreenState extends State<SignupScreen> {
 
   void _showError(String msg) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(msg), backgroundColor: AppColors.error, behavior: SnackBarBehavior.floating),
+      SnackBar(
+          content: Text(msg),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    // ... Baki build method ka code tumhara wala hi hai (No changes)
     return Scaffold(
       appBar: AppBar(backgroundColor: Colors.transparent, elevation: 0, foregroundColor: Colors.white),
       body: Stack(
@@ -79,20 +87,18 @@ class _SignupScreenState extends State<SignupScreen> {
                   const SizedBox(height: 10),
                   FadeInDown(
                     delay: const Duration(milliseconds: 200),
-                    child: const Text("Join the Tomato community", style: TextStyle(color: AppColors.textSecondary)),
+                    child: const Text("Set up your login to join PIET Tomato", style: TextStyle(color: AppColors.textSecondary)),
                   ),
-                  const SizedBox(height: 30),
-                  AuthField(controller: _nameController, hintText: "Full Name", icon: Icons.person_outline),
-                  const SizedBox(height: 15),
+                  const SizedBox(height: 40),
+
+                  // Sirf Email aur Password ki fields
                   AuthField(
-                    controller: _rollController,
-                    hintText: "Roll Number (e.g. 2822001)",
-                    icon: Icons.badge_outlined,
-                    keyboardType: TextInputType.number,
+                    controller: _emailController,
+                    hintText: "College Email",
+                    icon: Icons.email_outlined,
+                    keyboardType: TextInputType.emailAddress,
                   ),
-                  const SizedBox(height: 15),
-                  AuthField(controller: _emailController, hintText: "College Email", icon: Icons.email_outlined),
-                  const SizedBox(height: 15),
+                  const SizedBox(height: 20),
                   AuthField(
                     controller: _passwordController,
                     hintText: "Create Password",
@@ -100,7 +106,10 @@ class _SignupScreenState extends State<SignupScreen> {
                     obscureText: true,
                     onChanged: (val) => setState(() {}),
                   ),
-                  const SizedBox(height: 20),
+
+                  const SizedBox(height: 25),
+
+                  // Password Indicator Box
                   Container(
                     padding: const EdgeInsets.all(15),
                     decoration: BoxDecoration(
@@ -119,13 +128,17 @@ class _SignupScreenState extends State<SignupScreen> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 30),
+
+                  const SizedBox(height: 40),
+
                   ElevatedButton(
-                    style: ElevatedButton.styleFrom(minimumSize: const Size.fromHeight(55)),
+                    style: ElevatedButton.styleFrom(
+                      minimumSize: const Size.fromHeight(55),
+                      backgroundColor: AppColors.primaryYellow,
+                    ),
                     onPressed: _isLoading ? null : _handleSignup,
-                    child: const Text("Create Tomato Account"),
+                    child: const Text("Continue to Profile Setup", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
                   ),
-                  const SizedBox(height: 20),
                 ],
               ),
             ),
@@ -133,9 +146,7 @@ class _SignupScreenState extends State<SignupScreen> {
           if (_isLoading)
             Container(
               color: Colors.black87,
-              child: const Center(
-                child: CircularProgressIndicator(color: AppColors.primaryYellow),
-              ),
+              child: const Center(child: CircularProgressIndicator(color: AppColors.primaryYellow)),
             ),
         ],
       ),

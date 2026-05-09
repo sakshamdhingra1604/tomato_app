@@ -41,6 +41,7 @@ dependencies:
   animate_do: ^5.1.0
   get_it: ^7.7.0
   salomon_bottom_bar: ^3.3.2
+  provider: ^6.1.2
 
 dev_dependencies:
   flutter_test:

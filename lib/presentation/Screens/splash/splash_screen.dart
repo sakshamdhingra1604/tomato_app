@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:animate_do/animate_do.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../home_screen.dart';
+import '../Home/home_screen.dart';
 import '../login/login_screen.dart';
 
 

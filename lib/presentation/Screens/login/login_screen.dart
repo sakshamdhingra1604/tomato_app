@@ -1,12 +1,16 @@
 // ✅ GALAT import hata kar tumhara original routes import dala hai
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:animate_do/animate_do.dart';
 import 'package:loginsignuptesting/core/routes/app_routes.dart'; // Sahi import
 import '../../../core/theme/app_colors.dart';
 import '../../../data/repositories/auth_repository.dart';
+import '../../../injection.dart';
 import '../signup/signup_screen.dart';
 import 'widgets/auth_field.dart';
 import 'widgets/social_button.dart';
+
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -18,7 +22,7 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _authRepo = AuthRepository();
+  final _authRepo = getIt<AuthRepository>();
   bool _isLoading = false;
 
   void _handleEmailLogin() async {
@@ -43,17 +47,32 @@ class _LoginScreenState extends State<LoginScreen> {
       if (mounted) setState(() => _isLoading = false);
     }
   }
-
+  // Screen ke andar ka method
   void _handleGoogleSignIn() async {
     setState(() => _isLoading = true);
     try {
-      await _authRepo.signInWithGoogle();
-      // ✅ Navigator fix
-      if (mounted) {
-        Navigator.pushNamedAndRemoveUntil(context, AppRoutes.main, (route) => false);
+      // 🔥 Ab Repository method ka naam aur return type match karega
+      UserCredential? userCredential = await _authRepo.signInWithGoogle();
+
+      if (userCredential != null && mounted) {
+        final String uid = userCredential.user!.uid;
+
+        // 🔥 GATEKEEPER LOGIC: Screen decide karegi kahan jana hai
+        DocumentSnapshot userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(uid)
+            .get();
+
+        if (userDoc.exists && (userDoc.data() as Map<String, dynamic>).containsKey('profileCompleted')) {
+          // Purana User (PIET Student)
+          Navigator.pushNamedAndRemoveUntil(context, '/main', (route) => false);
+        } else {
+          // Naya User ya incomplete data
+          Navigator.pushNamedAndRemoveUntil(context, '/complete-profile', (route) => false);
+        }
       }
     } catch (e) {
-      _showProfessionalError("Google Sign-In failed. Try again.");
+      _showProfessionalError(e.toString());
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
