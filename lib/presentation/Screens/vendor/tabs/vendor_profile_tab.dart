@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/routes/app_routes.dart';
-import '../../../../services/storage_service.dart';
+import '../../../../core/services/storage_service.dart';
 
 class VendorProfileTab extends StatelessWidget {
   const VendorProfileTab({super.key});

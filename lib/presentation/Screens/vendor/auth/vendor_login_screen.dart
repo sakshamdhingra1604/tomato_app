@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart'; // Agar tum StorageService use karna chaho to iski jagah apna service import karo
 import '../../../../core/routes/app_routes.dart';
-import '../../../../services/storage_service.dart';
+import '../../../../core/services/storage_service.dart';
 
 class VendorLoginScreen extends StatefulWidget {
   const VendorLoginScreen({super.key});

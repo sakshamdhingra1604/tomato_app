@@ -43,6 +43,10 @@ dependencies:
   salomon_bottom_bar: ^3.3.2
   provider: ^6.1.2
   shared_preferences: ^2.5.5
+  image_picker: ^1.2.2
+  firebase_storage: ^12.4.10
+  cached_network_image: ^3.4.1
+
 
 
 dev_dependencies:

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'tabs/vendor_orders_tab.dart';
-import 'tabs/vendor_menu_tab.dart';
+import 'tabs/vendor_menu/vendor_menu_tab.dart';
 import 'tabs/vendor_earnings_tab.dart';
 import 'tabs/vendor_profile_tab.dart';
 
