@@ -81,33 +81,32 @@ class _VendorMenuTabState extends State<VendorMenuTab> {
     );
   }
 
+// screens/vendor/menu/vendor_menu_tab.dart
+
+// ... baki imports same rahengi ...
+
   Widget _buildMenuItemCard(String docId, Map<String, dynamic> data) {
     bool isAvailable = data['isAvailable'] ?? true;
+    bool isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? Colors.grey[900] : Colors.white,
         borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: Colors.grey.shade200),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10)],
+        border: Border.all(color: isDark ? Colors.white10 : Colors.grey.shade200),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Image part (Same as before)
           Expanded(
             child: Stack(
               children: [
                 ClipRRect(
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
-                  child: data['imageUrl'] != null
-                      ? CachedNetworkImage(
-                    imageUrl: data['imageUrl'],
-                    width: double.infinity,
-                    height: double.infinity,
-                    fit: BoxFit.cover,
-                    placeholder: (context, url) => Container(color: Colors.grey.shade100),
-                    errorWidget: (context, url, error) => const Icon(Icons.error),
-                  )
+                  child: data['imageUrl'] != null && data['imageUrl'] != ""
+                      ? CachedNetworkImage(imageUrl: data['imageUrl'], width: double.infinity, height: double.infinity, fit: BoxFit.cover)
                       : Container(color: Colors.grey.shade100, child: const Center(child: Icon(Icons.fastfood, color: Colors.grey))),
                 ),
                 Positioned(
@@ -120,12 +119,23 @@ class _VendorMenuTabState extends State<VendorMenuTab> {
               ],
             ),
           ),
+
           Padding(
             padding: const EdgeInsets.all(10),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(data['itemName'] ?? "Unnamed", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14), maxLines: 1, overflow: TextOverflow.ellipsis),
+
+                // 🔥 NEW: PREP TIME & DESC SHOW KARNA
+                Row(
+                  children: [
+                    const Icon(Icons.timer_outlined, size: 12, color: Colors.grey),
+                    const SizedBox(width: 4),
+                    Text("${data['prepTime'] ?? 0} mins", style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                  ],
+                ),
+
                 const SizedBox(height: 4),
                 Row(
                   children: [
@@ -138,10 +148,12 @@ class _VendorMenuTabState extends State<VendorMenuTab> {
                     ],
                   ],
                 ),
+
+                // In Stock Toggle (Small UI tweak for adaptive)
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text("In Stock", style: TextStyle(fontSize: 12)),
+                    Text(isAvailable ? "In Stock" : "Out of Stock", style: TextStyle(fontSize: 10, color: isAvailable ? Colors.green : Colors.red)),
                     Transform.scale(
                       scale: 0.7,
                       child: Switch(
@@ -152,11 +164,12 @@ class _VendorMenuTabState extends State<VendorMenuTab> {
                     ),
                   ],
                 ),
+
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton(
                     onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => AddItemScreen(editData: data, docId: docId))),
-                    style: OutlinedButton.styleFrom(visualDensity: VisualDensity.compact),
+                    style: OutlinedButton.styleFrom(visualDensity: VisualDensity.compact, side: BorderSide(color: isDark ? Colors.white24 : Colors.grey.shade300)),
                     child: const Text("Edit", style: TextStyle(fontSize: 12)),
                   ),
                 ),
@@ -167,7 +180,6 @@ class _VendorMenuTabState extends State<VendorMenuTab> {
       ),
     );
   }
-
   void _confirmDelete(String docId) {
     showDialog(
       context: context,

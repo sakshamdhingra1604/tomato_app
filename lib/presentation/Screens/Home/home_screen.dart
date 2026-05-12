@@ -1,79 +1,139 @@
+// lib/presentation/Screens/home/home_screen.dart
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-
-import '../../../core/theme/app_colors.dart';
+import 'package:loginsignuptesting/presentation/Screens/Home/tabs/vendor_menu_screen.dart';
+import '../../widgets/vendor_card.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
-  final List<String> cafes = const [
-    "Froot Shoot",
-    "Nescafe",
-    "Deepak",
-    "Old Canteen",
-    "Cafe14",
-    "Onestop",
-    "College Cafe",
-    "Bunny Kitchen",
-  ];
+  // 🔥 COLLEGE NAME: Firestore ke 'collegeName' field se exact match hona chahiye
+  final String currentStudentCollege = "Panipat Institute of Engineering and Technology (PIET)";
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.black,
       appBar: AppBar(
-        title: const Text("Campus Cafés"),
-        backgroundColor: AppColors.surfaceBg,
-      ),
-      body: GridView.builder(
-        padding: const EdgeInsets.all(16),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2, // 2 cafés per row
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 12,
-          childAspectRatio: 1.2,
+        title: const Text(
+          "Tomato Campus 🍅",
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 22),
         ),
-        itemCount: cafes.length,
-        itemBuilder: (context, index) {
-          final cafe = cafes[index];
-          return Card(
-            color: AppColors.cardBg,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
+        backgroundColor: Colors.black,
+        elevation: 0,
+        actions: [
+          IconButton(
+            onPressed: () {},
+            icon: const Icon(Icons.notifications_none, color: Colors.white),
+          )
+        ],
+      ),
+      body: StreamBuilder<QuerySnapshot>(
+        // Query: Sirf usi college ke vendors fetch karo
+        stream: FirebaseFirestore.instance
+            .collection('vendors')
+            .where('collegeName', isEqualTo: currentStudentCollege)
+            .snapshots(),
+        builder: (context, snapshot) {
+          // 1. Error Handling
+          if (snapshot.hasError) {
+            return const Center(
+              child: Text("Connection Error. Check Internet.", style: TextStyle(color: Colors.grey)),
+            );
+          }
+
+          // 2. Loading State
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return _buildShimmerLoading();
+          }
+
+          // 3. Empty State (Agar college mein koi vendor na ho)
+          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+            return _buildEmptyState();
+          }
+
+          return GridView.builder(
+            padding: const EdgeInsets.all(16),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+              childAspectRatio: 0.85, // Thoda height adjust kiya hai cards ke liye
             ),
-            child: InkWell(
-              onTap: () {
-                // TODO: Navigate to cafe details screen
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text("Opening $cafe...")),
-                );
-              },
-              borderRadius: BorderRadius.circular(16),
-              child: Center(
-                child: Text(
-                  cafe,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
+            itemCount: snapshot.data!.docs.length,
+            itemBuilder: (context, index) {
+              // Document fetch karo
+              var doc = snapshot.data!.docs[index];
+              var data = doc.data() as Map<String, dynamic>?;
+
+              if (data == null) return const SizedBox();
+
+              // 🔥 PRODUCTION DATA MAPPING: Firestore fields ke exact names
+              // 'cafeName' aur 'imageUrl' wahi hain jo tumhare screenshot mein hain
+              String cafeName = data['cafeName']?.toString() ?? 'Unnamed Cafe';
+              String imgUrl = data['imageUrl']?.toString() ?? '';
+
+              // vendorId priority: Firestore field 'vendorId' ya fir Document ID
+              String vId = data['vendorId']?.toString() ?? doc.id;
+
+              return VendorCard(
+                name: cafeName,
+                imageUrl: imgUrl,
+                onTap: () {
+                  debugPrint("Navigating to: $cafeName (ID: $vId)");
+
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => VendorMenuScreen(
+                        vendorId: vId,
+                        vendorName: cafeName,
+                      ),
+                    ),
+                  );
+                },
+              );
+            },
           );
         },
       ),
     );
   }
-}
 
-// --------------------
-// Example Main
-// --------------------
-void main() {
-  runApp(
-    MaterialApp(
-      theme: ThemeData.dark(useMaterial3: true),
-      home: const HomeScreen(),
-    ),
-  );
+  // --- UI Helpers ---
+
+  Widget _buildShimmerLoading() {
+    return GridView.builder(
+      padding: const EdgeInsets.all(16),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 16,
+        childAspectRatio: 0.85,
+      ),
+      itemCount: 4,
+      itemBuilder: (context, index) => Container(
+        decoration: BoxDecoration(
+          color: Colors.grey[900],
+          borderRadius: BorderRadius.circular(20),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.restaurant_menu, size: 60, color: Colors.grey[800]),
+          const SizedBox(height: 16),
+          const Text(
+            "No cafes found for your college.",
+            style: TextStyle(color: Colors.grey, fontSize: 16),
+          ),
+        ],
+      ),
+    );
+  }
 }

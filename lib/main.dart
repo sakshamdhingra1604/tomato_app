@@ -38,7 +38,9 @@ class TomatoApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Tomato - Campus Food',
-      theme: AppTheme.darkTheme,
+      theme: AppTheme.lightTheme,  // Add this
+      darkTheme: AppTheme.darkTheme, // Add this
+      themeMode: ThemeMode.system,  // Add this
 
       // 🔥 ROUTING DECISION:
       // 1. Agar vendor session mil gaya, seedha Vendor Dashboard.

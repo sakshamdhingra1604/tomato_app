@@ -23,6 +23,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
   late TextEditingController _priceController;
   late TextEditingController _prepController;
   late TextEditingController _specialPriceController;
+  late TextEditingController _descController; // New
 
   String _selectedCategory = 'Snacks';
   File? _image;
@@ -37,6 +38,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
     _priceController = TextEditingController(text: widget.editData?['price']?.toString());
     _prepController = TextEditingController(text: widget.editData?['prepTime']?.toString());
     _specialPriceController = TextEditingController(text: widget.editData?['specialPrice']?.toString());
+    _descController = TextEditingController(text: widget.editData?['description']); // New
     _selectedCategory = widget.editData?['category'] ?? 'Snacks';
   }
 
@@ -69,6 +71,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
           specialPrice: int.tryParse(_specialPriceController.text),
           prepTime: int.parse(_prepController.text),
           category: _selectedCategory,
+          description: _descController.text.trim(), // Added
           imageFile: _image,
           oldImageUrl: _existingImageUrl,
         );
@@ -80,6 +83,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
           specialPrice: int.tryParse(_specialPriceController.text),
           prepTime: int.parse(_prepController.text),
           category: _selectedCategory,
+          description: _descController.text.trim(), // Added
           imageFile: _image,
         );
       }
@@ -98,9 +102,17 @@ class _AddItemScreenState extends State<AddItemScreen> {
   @override
   Widget build(BuildContext context) {
     bool isEdit = widget.editData != null;
+    // Theme Adaptation
+    bool isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      appBar: AppBar(title: Text(isEdit ? "Edit Item" : "Add New Item")),
+      backgroundColor: isDark ? Colors.black : Colors.white, // Theme check
+      appBar: AppBar(
+        title: Text(isEdit ? "Edit Item" : "Add New Item"),
+        backgroundColor: isDark ? Colors.black : Colors.white,
+        foregroundColor: isDark ? Colors.white : Colors.black,
+        elevation: 0,
+      ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator(color: Colors.redAccent))
           : SingleChildScrollView(
@@ -114,15 +126,12 @@ class _AddItemScreenState extends State<AddItemScreen> {
                 child: Container(
                   height: 180, width: double.infinity,
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade100,
+                    color: isDark ? Colors.grey[900] : Colors.grey.shade100,
                     borderRadius: BorderRadius.circular(15),
-                    border: Border.all(color: Colors.grey.shade300),
+                    border: Border.all(color: isDark ? Colors.grey[800]! : Colors.grey.shade300),
                   ),
                   child: _image != null
-                      ? ClipRRect(borderRadius: BorderRadius.circular(15), child: Image.file(
-                    _image!,
-                    fit: BoxFit.cover,
-                  ),)
+                      ? ClipRRect(borderRadius: BorderRadius.circular(15), child: Image.file(_image!, fit: BoxFit.cover))
                       : (_existingImageUrl != null
                       ? ClipRRect(
                     borderRadius: BorderRadius.circular(15),
@@ -132,46 +141,36 @@ class _AddItemScreenState extends State<AddItemScreen> {
                       placeholder: (context, url) => const Center(child: CircularProgressIndicator()),
                     ),
                   )
-                      : const Column(
+                      : Column(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    children: [Icon(Icons.add_a_photo, size: 40, color: Colors.grey), Text("Add Food Photo")],
+                    children: [
+                      Icon(Icons.add_a_photo, size: 40, color: isDark ? Colors.grey[600] : Colors.grey),
+                      const Text("Add Food Photo", style: TextStyle(color: Colors.grey))
+                    ],
                   )),
                 ),
               ),
               const SizedBox(height: 25),
-              TextFormField(
-                controller: _nameController,
-                decoration: const InputDecoration(labelText: "Item Name*", border: OutlineInputBorder()),
-                validator: (v) => v!.isEmpty ? "Enter item name" : null,
-              ),
+              _buildTextField(_nameController, "Item Name*", Icons.fastfood, isDark, validator: (v) => v!.isEmpty ? "Enter item name" : null),
               const SizedBox(height: 15),
               Row(
                 children: [
                   Expanded(
-                    child: TextFormField(
-                      controller: _priceController,
-                      decoration: const InputDecoration(labelText: "Regular Price (₹)*", border: OutlineInputBorder()),
-                      keyboardType: TextInputType.number,
-                      validator: (v) => (v == null || int.tryParse(v) == null) ? "Invalid price" : null,
-                    ),
+                    child: _buildTextField(_priceController, "Price (₹)*", Icons.currency_rupee, isDark, keyboardType: TextInputType.number,
+                        validator: (v) => (v == null || int.tryParse(v) == null) ? "Invalid price" : null),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
-                    child: TextFormField(
-                      controller: _specialPriceController,
-                      decoration: const InputDecoration(labelText: "Offer Price (₹)", border: OutlineInputBorder()),
-                      keyboardType: TextInputType.number,
-                    ),
+                    child: _buildTextField(_specialPriceController, "Offer Price (₹)", Icons.local_offer, isDark, keyboardType: TextInputType.number),
                   ),
                 ],
               ),
               const SizedBox(height: 15),
-              TextFormField(
-                controller: _prepController,
-                decoration: const InputDecoration(labelText: "Prep Time (mins)*", border: OutlineInputBorder()),
-                keyboardType: TextInputType.number,
-                validator: (v) => (v == null || int.tryParse(v) == null) ? "Enter time" : null,
-              ),
+              _buildTextField(_prepController, "Prep Time (mins)*", Icons.timer, isDark, keyboardType: TextInputType.number,
+                  validator: (v) => (v == null || int.tryParse(v) == null) ? "Enter time" : null),
+              const SizedBox(height: 15),
+              // NEW: OPTIONAL DESCRIPTION FIELD
+              _buildTextField(_descController, "Item Description (Optional)", Icons.description, isDark, maxLines: 3),
               const SizedBox(height: 30),
               ElevatedButton(
                 onPressed: _saveItem,
@@ -186,6 +185,25 @@ class _AddItemScreenState extends State<AddItemScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  // Adaptive Field Builder
+  Widget _buildTextField(TextEditingController controller, String label, IconData icon, bool isDark, {TextInputType keyboardType = TextInputType.text, int maxLines = 1, String? Function(String?)? validator}) {
+    return TextFormField(
+      controller: controller,
+      keyboardType: keyboardType,
+      maxLines: maxLines,
+      style: TextStyle(color: isDark ? Colors.white : Colors.black),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: const TextStyle(color: Colors.grey),
+        prefixIcon: Icon(icon, color: Colors.redAccent, size: 20),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: isDark ? Colors.grey[800]! : Colors.grey.shade300)),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Colors.redAccent)),
+        border: const OutlineInputBorder(),
+      ),
+      validator: validator,
     );
   }
 }

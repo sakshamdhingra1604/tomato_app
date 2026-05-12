@@ -8,7 +8,7 @@ class FirebaseMenuService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
   final FirebaseStorage _storage = FirebaseStorage.instance;
 
-  // 1. ADD ITEM
+  // 1. ADD ITEM (Updated with Description)
   Future<void> addItem({
     required String vendorId,
     required String itemName,
@@ -16,6 +16,7 @@ class FirebaseMenuService {
     int? specialPrice,
     required int prepTime,
     required String category,
+    String? description, // Added field
     File? imageFile,
   }) async {
     try {
@@ -35,6 +36,7 @@ class FirebaseMenuService {
         'specialPrice': specialPrice ?? 0,
         'prepTime': prepTime,
         'category': category,
+        'description': description ?? "", // Added field
         'imageUrl': imageUrl,
         'isAvailable': true,
         'createdAt': FieldValue.serverTimestamp(),
@@ -44,7 +46,7 @@ class FirebaseMenuService {
     }
   }
 
-  // 2. UPDATE ITEM
+  // 2. UPDATE ITEM (Updated with Description)
   Future<void> updateItem({
     required String docId,
     required String vendorId,
@@ -53,6 +55,7 @@ class FirebaseMenuService {
     int? specialPrice,
     required int prepTime,
     required String category,
+    String? description, // Added field
     File? imageFile,
     String? oldImageUrl,
   }) async {
@@ -60,12 +63,11 @@ class FirebaseMenuService {
       String? finalImageUrl = oldImageUrl;
 
       if (imageFile != null) {
-        // Purani image delete karna safe rakha hai
         if (oldImageUrl != null && oldImageUrl.isNotEmpty) {
           try {
             await _storage.refFromURL(oldImageUrl).delete();
           } catch (e) {
-            print("Old image delete failed (might not exist): $e");
+            print("Old image delete failed: $e");
           }
         }
 
@@ -81,6 +83,7 @@ class FirebaseMenuService {
         'specialPrice': specialPrice ?? 0,
         'prepTime': prepTime,
         'category': category,
+        'description': description ?? "", // Added field
         'imageUrl': finalImageUrl,
         'updatedAt': FieldValue.serverTimestamp(),
       });
@@ -88,6 +91,8 @@ class FirebaseMenuService {
       throw Exception("Update failed: $e");
     }
   }
+// Toggle and Delete methods remain unchanged...
+
 
   // 3. TOGGLE STATUS
   Future<void> toggleStatus(String docId, bool currentStatus) async {
